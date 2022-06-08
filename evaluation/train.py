@@ -177,3 +177,34 @@ plt.legend(loc="lower left")
 plt.savefig(args["plot"])
 # serialize the model to disk
 torch.save(model, args["model"])
+
+# https://christianbernecker.medium.com/how-to-create-a-confusion-matrix-in-pytorch-38d06a7f04b7
+from sklearn.metrics import confusion_matrix
+import seaborn as sn
+import pandas as pd
+
+y_pred = []
+y_true = []
+
+# iterate over test data
+with torch.no_grad():
+    model.eval()
+    for inputs, labels in testDataLoader:
+        inputs = inputs.to(device)
+        outputs = model(inputs)  # Feed Network
+        outputs = outputs.argmax(axis=1).cpu().numpy()
+        y_pred.extend(outputs)  # Save Prediction
+
+        labels = labels.data.cpu().numpy()
+        y_true.extend(labels)  # Save Truth
+
+    # constant for classes
+    classes = ('o', 'ki', 'su', 'tsu', 'na', 'ha', 'ma', 'ya', 're', 'wo')
+
+    # Build confusion matrix
+    cf_matrix = confusion_matrix(y_true, y_pred)
+    df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix) * 10, index=[i for i in classes],
+                         columns=[i for i in classes])
+    plt.figure(figsize=(12, 7))
+    sn.heatmap(df_cm, annot=True)
+    plt.savefig('./output/cf_matrix.png')
