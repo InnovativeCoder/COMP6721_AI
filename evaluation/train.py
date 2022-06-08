@@ -3,6 +3,8 @@ import matplotlib
 matplotlib.use("Agg")
 
 from image_classifier.cnn import CNN
+from image_classifier.cnn2 import CNN2
+from image_classifier.cnn3 import CNN3
 from sklearn.metrics import classification_report
 from torch.utils.data import random_split
 from torch.utils.data import DataLoader
@@ -24,7 +26,7 @@ args = vars(ap.parse_args())
 
 # define training hyperparameters
 INIT_LR = 1e-3
-BATCH_SIZE = 4
+BATCH_SIZE = 25
 EPOCHS = 10
 # define the train and val splits
 TRAIN_SPLIT = 0.9
@@ -68,9 +70,11 @@ valSteps = len(valDataLoader.dataset) // BATCH_SIZE
 
 # initialize the CNN
 print("[INFO] initializing the CNN...")
-model = CNN(
-    numChannels=3,
-    classes=len(trainData.dataset.classes)).to(device)
+#model = CNN(
+#    numChannels=3,
+#    classes=len(trainData.dataset.classes)).to(device)
+model2 = CNN3(3).to(device)
+model = model2
 # initialize our optimizer and loss function
 opt = Adam(model.parameters(), lr=INIT_LR)
 lossFn = nn.NLLLoss()
