@@ -172,23 +172,13 @@ with torch.no_grad():
 plt.style.use("ggplot")
 plt.figure()
 plt.plot(H["train_loss"], label="train_loss")
-# plt.plot(H["val_loss"], label="val_loss")
-# plt.plot(H["train_acc"], label="train_acc")
-# plt.plot(H["val_acc"], label="val_acc")
-plt.title("Training Loss on Dataset")
-plt.xlabel("Epoch #")
-plt.ylabel("Loss")
-plt.legend(loc="lower left")
-plt.savefig("output/training_loss.png") # TODO: Update with argument parser
-
-plt.figure()
 plt.plot(H["train_acc"], label="train_acc")
-plt.plot(H["val_acc"], label="val_acc")
-plt.title("Training Loss on Dataset")
+plt.title("Training Loss/Accuracy on Dataset")
 plt.xlabel("Epoch #")
 plt.ylabel("Loss")
 plt.legend(loc="lower left")
-plt.savefig("output/training_accuracy.png")  # TODO: Update with argument parser
+plt.savefig(args["output"]) # TODO: Update with argument parser
+
 # serialize the model to disk
 torch.save(model, args["model"])
 
