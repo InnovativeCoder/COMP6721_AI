@@ -12,107 +12,201 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 import torchvision.datasets
+
+
+
+
+"""
+transform = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+print("printing: ", trainset)
+
+train_loader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, num_workers=2)
+testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+test_loader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=2)
+
+classes = ('plane', 'car', 'bird', 'cat',
+           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+# random dataset for now, need to be changed later to our images
+"""
+from sklearn import datasets
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import precision_score, recall_score
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+from pathlib import Path
+import pandas as pd
+from PIL import Image, ImageOps
+import numpy as np
+import glob
+
+dirPath = Path('./')
+datasetPath = Path(dirPath / 'data')
+noMaskPath = datasetPath / '1 - without a face mask'
+clothMaskPath = datasetPath / '2 - with a cloth mask'
+surgicalMaskPath = datasetPath / '3 - with a surgical mask'
+N95MaskPath = datasetPath / '4 - with a N95 mask'
+IncorrectMaskPath = datasetPath / '5. - Incorrectly worn Mask'
+maskDF = pd.DataFrame()
+
+for imagepath in tqdm(list(noMaskPath.iterdir()), desc='no'):
+    maskDF = maskDF.append({
+        'image': str(imagepath),
+        'mask': 0
+    }, ignore_index=True)
+
+for imagepath in tqdm(list(clothMaskPath.iterdir()), desc='cloth'):
+    maskDF = maskDF.append({
+        'image': str(imagepath),
+        'mask': 1
+    }, ignore_index=True)
+
+for imagepath in tqdm(list(N95MaskPath.iterdir()), desc='N95'):
+    maskDF = maskDF.append({
+        'image': str(imagepath),
+        'mask': 2
+    }, ignore_index=True)
+
+for imagepath in tqdm(list(surgicalMaskPath.iterdir()), desc='surgical'):
+    maskDF = maskDF.append({
+        'image': str(imagepath),
+        'mask': 3
+    }, ignore_index=True)
+
+for imagepath in tqdm(list(IncorrectMaskPath.iterdir()), desc='valve'):
+    maskDF = maskDF.append({
+        'image': str(imagepath),
+        'mask': 4
+    }, ignore_index=True)
+
+print("Total no. of images:", len(maskDF))
+data_frame = datasetPath / 'dataset.pickle'
+print(f'DataFrame saved successfully: {data_frame}')
+maskDF.to_pickle(data_frame)
+img = Image.open("./data/5. - Incorrectly worn Mask/maksssksksss815.png")
+
+img = img.resize((25,25))
+gray_image = ImageOps.grayscale(img)
+files = glob.glob("./data/5. - Incorrectly worn Mask/*.png")
+for file in files:
+    img = Image.open(file)
+    gray_image = ImageOps.grayscale(img)
+    img = gray_image.resize((50, 50))
+
+arr = np.array(img)
+y = np.array(maskDF["mask"])
+x = []
+# files = glob.glob("./data/5. - Incorrectly worn Mask/*.png")
+for i in range(len(maskDF["image"])):
+    #print(i)
+    img = Image.open(maskDF["image"][i])
+    gray_image = ImageOps.grayscale(img)
+    img = gray_image.resize((50, 50))
+    img = np.array(img)
+    x.append(img.flatten())
+
+import tensorflow as tf
+
+tensor = transforms.ToTensor()
+tensorList =  tf.convert_to_tensor(x)
+train_data, test_data = train_test_split(tensorList, test_size=0.25, train_size=0.75, shuffle=True)
+print("TRAIN ***********************************************************")
+print(train_data[0])
+print("TEST ***********************************************************")
+print(test_data[0])
+
 num_epochs = 4
 num_classes = 10
 learning_rate = 0.001
-transform = transforms.Compose(
-[transforms.ToTensor(),
-transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-download=True, transform=transform)
-train_loader = torch.utils.data.DataLoader(trainset, batch_size=32,
-shuffle=True, num_workers=2)
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-download=True, transform=transform)
-test_loader = torch.utils.data.DataLoader(testset, batch_size=1000,
-shuffle=False, num_workers=2)
-classes = ('plane', 'car', 'bird', 'cat',
-'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-#random dataset for now, need to be changed later to our images
-
 class CNN(nn.Module):
-  def __init__(self):
-    super(CNN, self).__init__()
-    self.conv_layer = nn.Sequential(
-      nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, padding=1),
-      nn.BatchNorm2d(32),
-      nn.LeakyReLU(inplace=True),
-      nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1),
-      nn.BatchNorm2d(32),
-      nn.LeakyReLU(inplace=True),
-      nn.MaxPool2d(kernel_size=2, stride=2),
-      nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
-      nn.BatchNorm2d(64),
-      nn.LeakyReLU(inplace=True),
-      nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
-      nn.BatchNorm2d(64),
-      nn.LeakyReLU(inplace=True),
-      nn.MaxPool2d(kernel_size=2, stride=2),
-    )
-    self.fc_layer = nn.Sequential(
-      nn.Dropout(p=0.1),
-      nn.Linear(8 * 8 * 64, 1000),
-      nn.ReLU(inplace=True),
-      nn.Linear(1000, 512),
-      nn.ReLU(inplace=True),
-      nn.Dropout(p=0.1),
-      nn.Linear(512, 10)
-    )
-  def forward(self, x):
-    # conv layers
-    x = self.conv_layer(x)
-    # flatten
-    x = x.view(x.size(0), -1)
-    # fc layer
-    x = self.fc_layer(x)
-    return x
+    def __init__(self):
+        super(CNN, self).__init__()
+        self.conv_layer = nn.Sequential(
+            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(inplace=True),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(inplace=True),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        self.fc_layer = nn.Sequential(
+            nn.Dropout(p=0.1),
+            nn.Linear(8 * 8 * 64, 1000),
+            nn.ReLU(inplace=True),
+            nn.Linear(1000, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.1),
+            nn.Linear(512, 10)
+        )
+
+    def forward(self, x):
+        # conv layers
+        x = self.conv_layer(x)
+        # flatten
+        x = x.view(x.size(0), -1)
+        # fc layer
+        x = self.fc_layer(x)
+        return x
+
 
 model = CNN()
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
-total_step = len(train_loader)
+total_step = len(train_data)
 loss_list = []
 acc_list = []
 for epoch in range(num_epochs):
-  for i, (images, labels) in enumerate(train_loader):
-    # Forward pass
-    outputs = model(images)
-    loss = criterion(outputs, labels)
-    loss_list.append(loss.item())
-    # Backprop and optimisation
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    # Train accuracy
-    total = labels.size(0)
-    _, predicted = torch.max(outputs.data, 1)
-    correct = (predicted == labels).sum().item()
-    acc_list.append(correct / total)
-    if (i + 1) % 100 == 0:
-      print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'
-      .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
-      (correct / total) * 100))
+    for i, (images, labels) in enumerate(train_data):
+        # Forward pass
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss_list.append(loss.item())
+        # Backprop and optimisation
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        # Train accuracy
+        total = labels.size(0)
+        _, predicted = torch.max(outputs.data, 1)
+        correct = (predicted == labels).sum().item()
+        acc_list.append(correct / total)
+        if (i + 1) % 100 == 0:
+            print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'
+                  .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
+                          (correct / total) * 100))
 
-#testing accuracy
+# testing accuracy
 model.eval()
 with torch.no_grad():
-  correct = 0
-  total = 0
-  for images, labels in test_loader:
-    outputs = model(images)
-    _, predicted = torch.max(outputs.data, 1)
-    total += labels.size(0)
-    correct += (predicted == labels).sum().item()
-    print('Test Accuracy of the model on the 10000 test images: {} %'
-    .format((correct / total) * 100))
+    correct = 0
+    total = 0
+    for images, labels in test_data:
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+        print('Test Accuracy of the model on the 10000 test images: {} %'
+              .format((correct / total) * 100))
 
-#to save
+# to save
 torch.save(model.state_dict(), r"C:\\Users\\Intel\\Desktop\\CNN.pt")
-#many details to be aware of when saving
-#https://pytorch.org/tutorials/beginner/saving_loading_models.html
+# many details to be aware of when saving
+# https://pytorch.org/tutorials/beginner/saving_loading_models.html
 
-#to restore
-#modelB = TheModelBClass(*args, **kwargs)
-#modelB.load_state_dict(torch.load(PATH), strict=False)
-#model.eval()
+# to restore
+# modelB = TheModelBClass(*args, **kwargs)
+# modelB.load_state_dict(torch.load(PATH), strict=False)
+# model.eval()
