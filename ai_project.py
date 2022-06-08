@@ -41,8 +41,11 @@ from tqdm import tqdm
 from pathlib import Path
 import pandas as pd
 from PIL import Image, ImageOps
-import numpy as np
 import glob
+from torch.utils.data import Dataset, DataLoader
+
+import numpy as np
+
 
 dirPath = Path('./')
 datasetPath = Path(dirPath / 'data')
@@ -102,26 +105,53 @@ y = np.array(maskDF["mask"])
 x = []
 # files = glob.glob("./data/5. - Incorrectly worn Mask/*.png")
 for i in range(len(maskDF["image"])):
-    #print(i)
+
     img = Image.open(maskDF["image"][i])
     gray_image = ImageOps.grayscale(img)
     img = gray_image.resize((50, 50))
     img = np.array(img)
     x.append(img.flatten())
 
+Images = np.array(x)
 import tensorflow as tf
 
-tensor = transforms.ToTensor()
-tensorList =  tf.convert_to_tensor(x)
-train_data, test_data = train_test_split(tensorList, test_size=0.25, train_size=0.75, shuffle=True)
-print("TRAIN ***********************************************************")
-print(train_data[0])
-print("TEST ***********************************************************")
-print(test_data[0])
+#tensor = transforms.ToTensor()
+#tensorList =  tf.convert_to_tensor(x)
+#train_data, test_data = train_test_split(tensorList, test_size=0.25, train_size=0.75, shuffle=True)
+#print("TRAIN ***********************************************************")
+#print(train_data[0])
+#print("TEST ***********************************************************")
+#print(test_data[0])
+
+#https://discuss.pytorch.org/t/input-numpy-ndarray-instead-of-images-in-a-cnn/18797
+class ImageDataset(Dataset):
+    def __init__(self, data, target, transform=None):
+        self.data = torch.from_numpy(data).float()
+        self.target = torch.from_numpy(target).long()
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        y = self.target[index]
+
+        if self.transform:
+            x = self.transform(x)
+
+        return x, y
+
+    def __len__(self):
+        return len(self.data)
+
+
 
 num_epochs = 4
 num_classes = 10
 learning_rate = 0.001
+batch_size = 100
+
+ds = ImageDataset(Images, np.array([batch_size,50,50,1]))
+loader = DataLoader(ds, batch_size, shuffle=True)
+
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
@@ -165,11 +195,13 @@ model = CNN()
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
-total_step = len(train_data)
+#train_data, test_data = train_test_split(loader, test_size=0.25, train_size=0.75, shuffle=True)
+
+total_step = len(loader)
 loss_list = []
 acc_list = []
 for epoch in range(num_epochs):
-    for i, (images, labels) in enumerate(train_data):
+    for i, (images, labels) in enumerate(loader):
         # Forward pass
         outputs = model(images)
         loss = criterion(outputs, labels)
@@ -193,7 +225,7 @@ model.eval()
 with torch.no_grad():
     correct = 0
     total = 0
-    for images, labels in test_data:
+    for images, labels in loader:
         outputs = model(images)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
