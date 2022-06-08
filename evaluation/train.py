@@ -6,8 +6,7 @@ from image_classifier.cnn import CNN
 from sklearn.metrics import classification_report
 from torch.utils.data import random_split
 from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor
-from torchvision.datasets import KMNIST
+from torchvision import transforms, datasets
 from torch.optim import Adam
 from torch import nn
 import matplotlib.pyplot as plt
@@ -25,26 +24,35 @@ args = vars(ap.parse_args())
 
 # define training hyperparameters
 INIT_LR = 1e-3
-BATCH_SIZE = 64
+BATCH_SIZE = 4
 EPOCHS = 10
 # define the train and val splits
-TRAIN_SPLIT = 0.75
-VAL_SPLIT = 1 - TRAIN_SPLIT
+TRAIN_SPLIT = 0.9
 # set the device we will be using to train the model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# load the KMNIST dataset
-# TODO: Update this with custom dataset and dataloader
-print("[INFO] loading the KMNIST dataset...")
-trainData = KMNIST(root="data", train=True, download=True,
-                   transform=ToTensor())
-testData = KMNIST(root="data", train=False, download=True,
-                  transform=ToTensor())
+data_transform = transforms.Compose([
+    transforms.Resize(125),  # smaller edge of image will be matched to 125 i.e, if height > width, then image will be rescaled to (size * height / width, size)
+    transforms.CenterCrop(100),  # a square crop (100, 100) is made
+    transforms.ToTensor(),
+    transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+])
+
+
+print("[INFO] loading the face mask detection dataset...")
+trainData = datasets.ImageFolder(
+    root="../final_dataset/train",
+    transform=data_transform
+)
+testData = datasets.ImageFolder(
+    root="../final_dataset/test",
+    transform=data_transform
+)
 
 # calculate the train/validation split
 print("[INFO] generating the train/validation split...")
 numTrainSamples = int(len(trainData) * TRAIN_SPLIT)
-numValSamples = int(len(trainData) * VAL_SPLIT)
+numValSamples = len(trainData) - numTrainSamples
 (trainData, valData) = random_split(trainData,
                                     [numTrainSamples, numValSamples],
                                     generator=torch.Generator().manual_seed(42))
@@ -61,7 +69,7 @@ valSteps = len(valDataLoader.dataset) // BATCH_SIZE
 # initialize the CNN
 print("[INFO] initializing the CNN...")
 model = CNN(
-    numChannels=1,
+    numChannels=3,
     classes=len(trainData.dataset.classes)).to(device)
 # initialize our optimizer and loss function
 opt = Adam(model.parameters(), lr=INIT_LR)
@@ -155,26 +163,32 @@ with torch.no_grad():
     # loop over the test set
     for (x, y) in testDataLoader:
         # send the input to the device
-        x = x.to(device)
+        x, y = x.to(device), y.to(device)
         # make the predictions and add them to the list
         pred = model(x)
         preds.extend(pred.argmax(axis=1).cpu().numpy())
-# generate a classification report
-print(classification_report(testData.targets.cpu().numpy(),
-                            np.array(preds), target_names=testData.classes))
 
 # plot the training loss and accuracy
 plt.style.use("ggplot")
 plt.figure()
 plt.plot(H["train_loss"], label="train_loss")
-plt.plot(H["val_loss"], label="val_loss")
+# plt.plot(H["val_loss"], label="val_loss")
+# plt.plot(H["train_acc"], label="train_acc")
+# plt.plot(H["val_acc"], label="val_acc")
+plt.title("Training Loss on Dataset")
+plt.xlabel("Epoch #")
+plt.ylabel("Loss")
+plt.legend(loc="lower left")
+plt.savefig("output/training_loss.png") # TODO: Update with argument parser
+
+plt.figure()
 plt.plot(H["train_acc"], label="train_acc")
 plt.plot(H["val_acc"], label="val_acc")
-plt.title("Training Loss and Accuracy on Dataset")
+plt.title("Training Loss on Dataset")
 plt.xlabel("Epoch #")
-plt.ylabel("Loss/Accuracy")
+plt.ylabel("Loss")
 plt.legend(loc="lower left")
-plt.savefig(args["plot"])
+plt.savefig("output/training_accuracy.png")  # TODO: Update with argument parser
 # serialize the model to disk
 torch.save(model, args["model"])
 
@@ -199,12 +213,20 @@ with torch.no_grad():
         y_true.extend(labels)  # Save Truth
 
     # constant for classes
-    classes = ('o', 'ki', 'su', 'tsu', 'na', 'ha', 'ma', 'ya', 're', 'wo')
+    classes = trainData.dataset.classes
 
     # Build confusion matrix
     cf_matrix = confusion_matrix(y_true, y_pred)
-    df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix) * 10, index=[i for i in classes],
+    df_cm = pd.DataFrame(cf_matrix / np.sum(cf_matrix) * len(classes), index=[i for i in classes],
                          columns=[i for i in classes])
     plt.figure(figsize=(12, 7))
     sn.heatmap(df_cm, annot=True)
     plt.savefig('./output/cf_matrix.png')
+
+    # generate a classification report
+    # print(classification_report(testData.targets.cpu().numpy(),
+    #                             np.array(preds), target_names=testData.classes))
+    print(classification_report(y_true,
+                                y_pred, target_names=testData.classes))
+
+

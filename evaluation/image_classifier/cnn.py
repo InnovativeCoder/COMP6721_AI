@@ -26,7 +26,7 @@ class CNN(Module):
         self.relu2 = ReLU()
         self.maxpool2 = MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
         # initialize first (and only) set of FC => RELU layers
-        self.fc1 = Linear(in_features=800, out_features=500)
+        self.fc1 = Linear(in_features=24200, out_features=500)
         self.relu3 = ReLU()
         # initialize our softmax classifier
         self.fc2 = Linear(in_features=500, out_features=classes)
