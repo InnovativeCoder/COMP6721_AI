@@ -2,14 +2,12 @@ import matplotlib
 
 matplotlib.use("Agg")
 
-from image_classifier.cnn import CNN
-from image_classifier.cnn2 import CNN2
-from image_classifier.cnn3 import CNN3
+from image_classifier import cnn1, cnn2, cnn3
 from sklearn.metrics import classification_report
 from torch.utils.data import random_split
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 from torch import nn
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,10 +16,8 @@ import torch
 import time
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-m", "--model", type=str, required=True,
-                help="path to output trained model")
-ap.add_argument("-p", "--plot", type=str, required=True,
-                help="path to output loss/accuracy plot")
+ap.add_argument("-v", "--variant", type=int, required=True,
+                help="the model to train and save")
 args = vars(ap.parse_args())
 
 # define training hyperparameters
@@ -34,12 +30,12 @@ TRAIN_SPLIT = 0.9
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 data_transform = transforms.Compose([
-    transforms.Resize(125),  # smaller edge of image will be matched to 125 i.e, if height > width, then image will be rescaled to (size * height / width, size)
+    transforms.Resize(125),
+    # smaller edge of image will be matched to 125 i.e, if height > width, then image will be rescaled to (size * height / width, size)
     transforms.CenterCrop(100),  # a square crop (100, 100) is made
     transforms.ToTensor(),
     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
 ])
-
 
 print("[INFO] loading the face mask detection dataset...")
 trainData = datasets.ImageFolder(
@@ -69,15 +65,17 @@ trainSteps = len(trainDataLoader.dataset) // BATCH_SIZE
 valSteps = len(valDataLoader.dataset) // BATCH_SIZE
 
 # initialize the CNN
-print("[INFO] initializing the CNN...")
-#model = CNN(
-#    numChannels=3,
-#    classes=len(trainData.dataset.classes)).to(device)
-model2 = CNN3(3).to(device)
-model = model2
+print(f"[INFO] initializing the CNN variant {args['variant']}...")
+
+variants = {1: cnn1, 2: cnn2, 3: cnn3}
+model = variants[args["variant"]].CNN(numChannels=3, classes=len(trainData.dataset.classes)).to(device)
+
 # initialize our optimizer and loss function
+# opt = SGD(model.parameters(), lr=INIT_LR)
+# lossFn = nn.CrossEntropyLoss()
 opt = Adam(model.parameters(), lr=INIT_LR)
 lossFn = nn.NLLLoss()
+
 # initialize a dictionary to store training history
 H = {
     "train_loss": [],
@@ -155,22 +153,6 @@ for e in range(0, EPOCHS):
 endTime = time.time()
 print("[INFO] total time taken to train the model: {:.2f}s".format(
     endTime - startTime))
-# we can now evaluate the network on the test set
-print("[INFO] evaluating network...")
-# turn off autograd for testing evaluation
-with torch.no_grad():
-    # set the model in evaluation mode
-    model.eval()
-
-    # initialize a list to store our predictions
-    preds = []
-    # loop over the test set
-    for (x, y) in testDataLoader:
-        # send the input to the device
-        x, y = x.to(device), y.to(device)
-        # make the predictions and add them to the list
-        pred = model(x)
-        preds.extend(pred.argmax(axis=1).cpu().numpy())
 
 # plot the training loss and accuracy
 plt.style.use("ggplot")
@@ -179,24 +161,29 @@ plt.plot(H["train_loss"], label="train_loss")
 plt.plot(H["train_acc"], label="train_acc")
 plt.title("Training Loss/Accuracy on Dataset")
 plt.xlabel("Epoch #")
-plt.ylabel("Loss")
+plt.ylabel("Loss/Accuracy")
 plt.legend(loc="lower left")
-plt.savefig(args["output"]) # TODO: Update with argument parser
+plt.savefig(f'./metrics/training{args["variant"]}.png')
 
 # serialize the model to disk
-torch.save(model, args["model"])
+torch.save(model, f'./models/model{args["variant"]}.pth')
 
 # https://christianbernecker.medium.com/how-to-create-a-confusion-matrix-in-pytorch-38d06a7f04b7
 from sklearn.metrics import confusion_matrix
 import seaborn as sn
 import pandas as pd
 
-y_pred = []
-y_true = []
-
-# iterate over test data
+# we can now evaluate the network on the test set
+print("[INFO] evaluating network...")
+# turn off autograd for testing evaluation
 with torch.no_grad():
+    # set the model in evaluation mode
     model.eval()
+
+    # initialize a list to store our predictions
+    y_pred = []
+    y_true = []
+
     for inputs, labels in testDataLoader:
         inputs = inputs.to(device)
         outputs = model(inputs)  # Feed Network
@@ -215,12 +202,10 @@ with torch.no_grad():
                          columns=[i for i in classes])
     plt.figure(figsize=(12, 7))
     sn.heatmap(df_cm, annot=True)
-    plt.savefig('./output/cf_matrix.png')
+    plt.savefig(f'./metrics/cf_matrix_{args["variant"]}.png')
 
-    # generate a classification report
-    # print(classification_report(testData.targets.cpu().numpy(),
-    #                             np.array(preds), target_names=testData.classes))
     print(classification_report(y_true,
                                 y_pred, target_names=testData.classes))
-
-
+    with open(f"./metrics/eval_metrics{args['variant']}.txt", "w") as f:
+        f.write(classification_report(y_true,
+                                      y_pred, target_names=testData.classes))

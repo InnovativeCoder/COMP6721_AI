@@ -8,15 +8,15 @@ from torch import flatten
 import torch.nn as nn
 import torch.nn.functional as F
 
-class CNN3(nn.Module):
-    def __init__(self, channels):
-        super(CNN3, self).__init__()
-        self.conv_layer1 = nn.Conv2d(channels,10, 5)
+class CNN(nn.Module):
+    def __init__(self, numChannels, classes):
+        super(CNN, self).__init__()
+        self.conv_layer1 = nn.Conv2d(numChannels,10, 5)
         self.pool = nn.MaxPool2d(2,2)
         self.conv_layer2 = nn.Conv2d(10, 25, 5)
         self.fc1 = nn.Linear(25*22*22, 800)
         self.fc2 = nn.Linear(800, 120)
-        self.fc3 = nn.Linear(120, 5)
+        self.fc3 = nn.Linear(120, classes)
 
         self.logSoftmax = LogSoftmax(dim=1)
 
