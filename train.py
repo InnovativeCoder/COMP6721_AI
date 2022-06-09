@@ -168,7 +168,7 @@ plt.savefig(f'./metrics/training{args["variant"]}.png')
 # serialize the model to disk
 torch.save(model, f'./models/model{args["variant"]}.pth')
 
-# https://christianbernecker.medium.com/how-to-create-a-confusion-matrix-in-pytorch-38d06a7f04b7
+# https://christianbernecker.medium.com/how-to-create-a-confusion-matrix-in-pytorch-38d06a7f04b7 [13]
 from sklearn.metrics import confusion_matrix
 import seaborn as sn
 import pandas as pd

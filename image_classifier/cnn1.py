@@ -1,4 +1,4 @@
-# adapted from -> https://pyimagesearch.com/2021/07/19/pytorch-training-your-first-convolutional-neural-network-cnn/
+# adapted from -> https://pyimagesearch.com/2021/07/19/pytorch-training-your-first-convolutional-neural-network-cnn/ [12]
 
 from torch.nn import Module
 from torch.nn import Conv2d
