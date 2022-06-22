@@ -11,10 +11,12 @@ import torch.nn.functional as F
 class CNN(nn.Module):
     def __init__(self, numChannels, classes):
         super(CNN, self).__init__()
-        self.conv_layer1 = nn.Conv2d(numChannels,10, 5)
-        self.pool = nn.MaxPool2d(2,2)
-        self.conv_layer2 = nn.Conv2d(10, 25, 5)
-        self.fc1 = nn.Linear(25*22*22, 800)
+        self.conv_layer1 = nn.Conv2d(numChannels,20, 5)
+        self.pool1 = nn.MaxPool2d(3, 2)
+        self.conv_layer2 = nn.Conv2d(20, 50, 5)
+        self.conv_layer3 = nn.Conv2d(50, 100, 5)
+        self.conv_layer4 = nn.Conv2d(100, 200, 5)
+        self.fc1 = nn.Linear(200, 800)
         self.fc2 = nn.Linear(800, 120)
         self.fc3 = nn.Linear(120, classes)
 
@@ -24,11 +26,19 @@ class CNN(nn.Module):
         # conv layers
         x = self.conv_layer1(x)
         x = F.relu(x)
-        x = self.pool(x)
+        x = self.pool1(x)
 
         x = self.conv_layer2(x)
         x = F.relu(x)
-        x = self.pool(x)
+        x = self.pool1(x)
+
+        x = self.conv_layer3(x)
+        x = F.relu(x)
+        x = self.pool1(x)
+
+        x = self.conv_layer4(x)
+        x = F.relu(x)
+        x = self.pool1(x)
         # flatten
         x = x.view(x.size(0), -1)
         # fc layer
