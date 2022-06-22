@@ -1,3 +1,5 @@
+import csv
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -209,3 +211,49 @@ with torch.no_grad():
     with open(f"./metrics/eval_metrics{args['variant']}.txt", "w") as f:
         f.write(classification_report(y_true,
                                       y_pred, target_names=testData.classes))
+
+#csv.reader("C:\Users\Intel\Downloads\Test_Dataset_Categories", "Excel")
+
+#indeces as class
+testMales = [34,35,43,50,69]
+testFemales = [66,65,57,50,31]
+testYoung = [31,33,24,27,38]
+testMiddle = [49,41,57,53,56]
+testOld = [20,26,19,20,16]
+#each index here should sum to 100
+
+with open('C:\\Users\\Intel\\Downloads\\Test_Dataset_Categories.csv') as csvfile:
+    reader = csv.reader(csvfile, 'excel')
+
+malesByClass = [0,0,0,0,0]
+femalesByClass = [0,0,0,0,0]
+youngByClass = [0,0,0,0,0]
+middleByClass = [0,0,0,0,0]
+oldByClass = [0,0,0,0,0]
+for i in range(len(testData.imgs)):
+    if y_pred[i] == y_true[i]:
+        outputClass = y_true[i]
+
+        gender = csvfile[i].Gender #doesnt work.. get the gender for picture i
+        age = csvfile[i].Age #doesnt work.. get the age for picture i
+
+        if gender == "Male":
+            malesByClass[outputClass] += 1
+        else:
+            femalesByClass[outputClass] += 1
+
+        if age == "Young":
+            youngByClass[outputClass] += 1
+        elif age == "Middle":
+            middleByClass[outputClass] += 1
+        else:
+            oldByClass[outputClass] += 1
+
+for i in range(5):
+    print(f"Males for Class {i} predicted with Accuracy {malesByClass[i]/testMales[i]*100}%")
+    print(f"Females for Class {i} predicted with Accuracy {femalesByClass[i]/testFemales[i]*100}%")
+    print(f"Young age for Class {i} predicted with Accuracy {youngByClass[i]/testYoung[i]*100}%")
+    print(f"Middle age for Class {i} predicted with Accuracy {middleByClass[i]/testMiddle[i]*100}%")
+    print(f"Old age for Class {i} predicted with Accuracy {oldByClass[i]/testOld[i]*100}%")
+
+    # @TODO precision, recall, etc
