@@ -279,3 +279,33 @@ for i in range(5):
           f"{'{0:.0f}'.format(youngByClass[i] / testYoung[i] * 100)}%  -  "
           f"{'{0:.0f}'.format(middleByClass[i] / testMiddle[i] * 100)}%  -  "
           f"{'{0:.0f}'.format(oldByClass[i] / testOld[i] * 100)}%")
+
+# Save confusion matrices and evaluation metrics for bias categories
+classes = testData.classes
+def save_bias_category(y_true, y_pred, bias_idx, bias_name):
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    bias_idx = np.array(bias_idx)
+    # Filter the bias category samples
+    y_true = y_true[bias_idx]
+    y_pred = y_pred[bias_idx]
+
+    cf_matrix = confusion_matrix(y_true, y_pred)
+    df_cm = pd.DataFrame(cf_matrix, index=[i for i in classes],
+                         columns=[i for i in classes])
+
+    plt.figure(figsize=(12, 7))
+    sn.heatmap(df_cm, annot=True)
+    plt.savefig(f'./bias_evaluations/cf_matrix_{bias_name}.png')
+    print(f"Saved test confusion matrix for {bias_name}")
+
+    with open(f"./bias_evaluations/eval_metrics_{bias_name}.txt", "w") as f:
+        f.write(classification_report(y_true,
+                                      y_pred, target_names=testData.classes))
+    print(f"Saved test evaluation metrics for {bias_name}")
+
+save_bias_category(y_true, y_pred, MaleIndex, "male")
+save_bias_category(y_true, y_pred, FemaleIndex, "female")
+save_bias_category(y_true, y_pred, YoungIndex, "young")
+save_bias_category(y_true, y_pred, MiddleIndex, "middle")
+save_bias_category(y_true, y_pred, OldIndex, "old")
