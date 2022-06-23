@@ -1,3 +1,5 @@
+import csv
+
 import matplotlib
 import pandas as pd
 
@@ -205,32 +207,50 @@ with torch.no_grad():
                                       y_pred, target_names=testData.classes))
     print(f"Saved test evaluation metrics for the final model")
 
-#csv.reader("C:\Users\Intel\Downloads\Test_Dataset_Categories", "Excel")
+# csv.reader("C:\Users\Intel\Downloads\Test_Dataset_Categories", "Excel")
 
-#indeces as class
-testMales = [34,35,43,50,69]
-testFemales = [66,65,57,50,31]
-testYoung = [31,33,24,27,38]
-testMiddle = [49,41,57,53,56]
-testOld = [20,26,19,20,16]
-#each index here should sum to 100
+# indeces as class
+testMales = [34, 35, 43, 50, 69]
+testFemales = [66, 65, 57, 50, 31]
+testYoung = [31, 33, 24, 27, 38]
+testMiddle = [49, 41, 57, 53, 56]
+testOld = [20, 26, 19, 20, 16]
+# each index here should sum to 100
 
 ageList = []
 genderList = []
 
+MaleIndex = []
+FemaleIndex = []
+YoungIndex = []
+MiddleIndex = []
+OldIndex = []
+
 with open('dataset\\test\\Test_Dataset_Categories_List.csv', newline='') as csvfile:
     reader = csv.reader(csvfile, 'excel')
+    i = 0
     for row in reader:
         if row[0] == '' or row[1] == "Age":
             continue
         ageList.append(row[1])
         genderList.append(row[2])
+        if row[1] == "Old":
+            OldIndex.append(i)
+        if row[1] == "Middle":
+            MiddleIndex.append(i)
+        if row[1] == "Young":
+            YoungIndex.append(i)
+        if row[2] == "Male":
+            MaleIndex.append(i)
+        if row[2] == "Female":
+            FemaleIndex.append(i)
+        i += 1
 
-malesByClass = [0,0,0,0,0]
-femalesByClass = [0,0,0,0,0]
-youngByClass = [0,0,0,0,0]
-middleByClass = [0,0,0,0,0]
-oldByClass = [0,0,0,0,0]
+malesByClass = [0, 0, 0, 0, 0]
+femalesByClass = [0, 0, 0, 0, 0]
+youngByClass = [0, 0, 0, 0, 0]
+middleByClass = [0, 0, 0, 0, 0]
+oldByClass = [0, 0, 0, 0, 0]
 for i in range(len(testData.imgs)):
     if y_pred[i] == y_true[i]:
         outputClass = y_true[i]
@@ -254,8 +274,8 @@ print("Accuracy per class for Gender and Age biases:")
 print("Class - Male - Female - Young - Middle - Old")
 for i in range(5):
     print(f"  {i}  -  "
-          f"{'{0:.0f}'.format(malesByClass[i]/testMales[i]*100)}%  -  "
-          f"{'{0:.0f}'.format(femalesByClass[i]/testFemales[i]*100)}%  -  "
-          f"{'{0:.0f}'.format(youngByClass[i]/testYoung[i]*100)}%  -  "
-          f"{'{0:.0f}'.format(middleByClass[i]/testMiddle[i]*100)}%  -  "
-          f"{'{0:.0f}'.format(oldByClass[i]/testOld[i]*100)}%")
+          f"{'{0:.0f}'.format(malesByClass[i] / testMales[i] * 100)}%  -  "
+          f"{'{0:.0f}'.format(femalesByClass[i] / testFemales[i] * 100)}%  -  "
+          f"{'{0:.0f}'.format(youngByClass[i] / testYoung[i] * 100)}%  -  "
+          f"{'{0:.0f}'.format(middleByClass[i] / testMiddle[i] * 100)}%  -  "
+          f"{'{0:.0f}'.format(oldByClass[i] / testOld[i] * 100)}%")
