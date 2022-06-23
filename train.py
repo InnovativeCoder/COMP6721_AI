@@ -257,11 +257,12 @@ for i in range(len(testData.imgs)):
         else:
             oldByClass[outputClass] += 1
 
+print("Accuracy per class for Gender and Age biases:")
+print("Class - Male - Female - Young - Middle - Old")
 for i in range(5):
-    print(f"Males for Class {i} predicted with Accuracy {malesByClass[i]/testMales[i]*100}%")
-    print(f"Females for Class {i} predicted with Accuracy {femalesByClass[i]/testFemales[i]*100}%")
-    print(f"Young age for Class {i} predicted with Accuracy {youngByClass[i]/testYoung[i]*100}%")
-    print(f"Middle age for Class {i} predicted with Accuracy {middleByClass[i]/testMiddle[i]*100}%")
-    print(f"Old age for Class {i} predicted with Accuracy {oldByClass[i]/testOld[i]*100}%")
-
-    # @TODO precision, recall, etc
+    print(f"  {i}  -  "
+          f"{'{0:.0f}'.format(malesByClass[i]/testMales[i]*100)}%  -  "
+          f"{'{0:.0f}'.format(femalesByClass[i]/testFemales[i]*100)}%  -  "
+          f"{'{0:.0f}'.format(youngByClass[i]/testYoung[i]*100)}%  -  "
+          f"{'{0:.0f}'.format(middleByClass[i]/testMiddle[i]*100)}%  -  "
+          f"{'{0:.0f}'.format(oldByClass[i]/testOld[i]*100)}%")
