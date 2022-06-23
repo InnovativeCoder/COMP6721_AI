@@ -222,8 +222,16 @@ testMiddle = [49,41,57,53,56]
 testOld = [20,26,19,20,16]
 #each index here should sum to 100
 
-with open('C:\\Users\\Intel\\Downloads\\Test_Dataset_Categories.csv') as csvfile:
+ageList = []
+genderList = []
+
+with open('dataset\\test\\Test_Dataset_Categories_List.csv', newline='') as csvfile:
     reader = csv.reader(csvfile, 'excel')
+    for row in reader:
+        if row[0] == '' or row[1] == "Age":
+            continue
+        ageList.append(row[1])
+        genderList.append(row[2])
 
 malesByClass = [0,0,0,0,0]
 femalesByClass = [0,0,0,0,0]
@@ -234,8 +242,8 @@ for i in range(len(testData.imgs)):
     if y_pred[i] == y_true[i]:
         outputClass = y_true[i]
 
-        gender = csvfile[i].Gender #doesnt work.. get the gender for picture i
-        age = csvfile[i].Age #doesnt work.. get the age for picture i
+        gender = genderList[i]
+        age = ageList[i]
 
         if gender == "Male":
             malesByClass[outputClass] += 1
