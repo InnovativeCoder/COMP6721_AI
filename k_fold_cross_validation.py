@@ -26,7 +26,7 @@ variants = {1: cnn1, 2: cnn2, 3: cnn3}
 # define training hyperparameters
 INIT_LR = 1e-3
 BATCH_SIZE = 25
-EPOCHS = 10
+EPOCHS = 20
 FOLDS = 10
 
 # set the device we will be using to train the model
@@ -166,6 +166,9 @@ for fold, (train_ids, validation_ids) in enumerate(kfold.split(dataset)):
 # serialize the model to disk
 torch.save(final_model, f'./models/final_model.pth')
 
+print(f"Average accuracy : {np.average(validation_accuracies)}")
+
+print("TESTING:")
 # On the test set
 with torch.no_grad():
     # set the model in evaluation mode

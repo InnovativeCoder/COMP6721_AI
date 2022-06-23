@@ -1,11 +1,11 @@
                           precision    recall  f1-score   support
 
-         01_without_mask       0.82      0.80      0.81       256
-      02_with_cloth_mask       0.63      0.60      0.61       245
-   03_with_surgical_mask       0.41      0.87      0.55       260
-        04_with_n95_mask       0.66      0.24      0.35       251
-05_incorrectly_worn_mask       0.74      0.41      0.53       259
+         01_without_mask       0.87      0.89      0.88        54
+      02_with_cloth_mask       0.63      0.62      0.62        39
+   03_with_surgical_mask       0.65      0.67      0.66        58
+        04_with_n95_mask       0.73      0.65      0.69        54
+05_incorrectly_worn_mask       0.70      0.76      0.73        50
 
-                accuracy                           0.58      1271
-               macro avg       0.65      0.58      0.57      1271
-            weighted avg       0.65      0.58      0.57      1271
+                accuracy                           0.72       255
+               macro avg       0.72      0.72      0.72       255
+            weighted avg       0.72      0.72      0.72       255
