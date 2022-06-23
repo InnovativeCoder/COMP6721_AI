@@ -16,6 +16,10 @@ To run the training script:
 ```shell
 python training.py -v <1|2|3>  # variants implemented in the image_classifier package
 ```
+To run the k-fold cross validation script:
+```shell
+python k_fold_cross_validation.py -v <1|2|3>  # variants implemented in the image_classifier package
+```
 
 To test a model, run the prediction script:
 ```shell
