@@ -39,7 +39,11 @@ print("[INFO] loading and preprocessing the given image...")
 # load the model and set it to evaluation mode
 
 image = Image.open(f"{args['image']}")
-model = torch.load(f'models/model{args["variant"]}.pth').to(device)
+if args["variant"] == "f":
+    model = torch.load(f'models/final_model.pth').to(device)
+else:
+    model = torch.load(f'models/model{args["variant"]}.pth').to(device)
+
 model.eval()
 
 classes = [
